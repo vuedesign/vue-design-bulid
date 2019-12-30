@@ -5,6 +5,7 @@ const utils = require('./utils')
 const config = require(path.join(utils.APP_PATH, 'config'))
 const vueLoaderConfig = require('./vue-loader.conf')
 const vuedesignconfig = require('./vuedesignconfig.js')
+const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
 const dirMap = {
   assets: 'DIR_ASSETS',
@@ -45,7 +46,7 @@ const createLintingRule = () => ({
   test: /\.(js|vue)$/,
   loader: 'eslint-loader',
   enforce: 'pre',
-  include: [resolve('src'), resolve('test')],
+  include: [resolve('src'), resolve('node_modules/vue-design-core')],
   options: {
     formatter: require('eslint-friendly-formatter'),
     emitWarning: !config.dev.showEslintErrorsInOverlay
@@ -53,6 +54,7 @@ const createLintingRule = () => ({
 })
 
 module.exports = {
+  mode: process.env.NODE_ENV,
   context: utils.APP_PATH,
   entry: {
     app: path.join(utils.APP_PATH, 'src','main.js')
@@ -76,6 +78,15 @@ module.exports = {
       '@assets': getSrcDir('assets')
     }
   },
+  performance: {
+    hints: "warning", // 枚举
+    maxAssetSize: 30000000, // 整数类型（以字节为单位）
+    maxEntrypointSize: 50000000, // 整数类型（以字节为单位）
+    assetFilter: function(assetFilename) {
+    // 提供资源文件名的断言函数
+      return assetFilename.endsWith('.css') || assetFilename.endsWith('.js');
+    }
+  },
   module: {
     rules: [
       ...(config.dev.useEslint ? [createLintingRule()] : []),
@@ -87,7 +98,7 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [resolve('src'), resolve('test'), resolve('node_modules/@vd/vue-design-core'), resolve('node_modules/webpack-dev-server/client')]
+        include: [resolve('src'), resolve('node_modules/vue-design-core')]
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -126,5 +137,8 @@ module.exports = {
     net: 'empty',
     tls: 'empty',
     child_process: 'empty'
-  }
+  },
+  plugins: [
+    new VueLoaderPlugin()
+  ]
 }
