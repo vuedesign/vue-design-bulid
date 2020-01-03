@@ -4,39 +4,7 @@ const path = require('path')
 const utils = require('./utils')
 const config = require(path.join(utils.APP_PATH, 'config'))
 const vueLoaderConfig = require('./vue-loader.conf')
-const vuedesignconfig = require('./vuedesignconfig.js')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
-
-const dirMap = {
-  assets: 'DIR_ASSETS',
-  configs: 'DIR_CONFIGS',
-  globals: 'DIR_GLOBALS',
-  modules: 'DIR_MODULES',
-  vendors: 'DIR_VENDORS'
-}
-const vdc = getVueDesignConfig();
-
-function getVueDesignConfig() {
-  try {
-    return require(path.join(utils.APP_PATH, '.vuedesignconfig.js'))
-  } catch (error) {
-    return vuedesignconfig;
-  }
-}
-
-function getSrcDir(type) {
-  if (vdc[dirMap[type]]) {
-    const dir = resolve(`src/${vdc[dirMap[type]]}`);
-    try {
-      fs.statSync(dir);
-    } catch (error) {
-      console.warn(`warning: <${vdc[dirMap[type]]}> directory not found in src directory`);
-    }
-    return dir;
-  } else {
-    return resolve(`src/${type}`);
-  }
-}
 
 function resolve (dir) {
   return path.join(utils.APP_PATH, dir)
@@ -57,7 +25,7 @@ module.exports = {
   mode: process.env.NODE_ENV,
   context: utils.APP_PATH,
   entry: {
-    app: path.join(utils.APP_PATH, 'src','main.js')
+    app: ['@babel/polyfill', path.join(utils.APP_PATH, 'src','main.js')]
   },
   output: {
     path: config.build.assetsRoot,
@@ -71,11 +39,11 @@ module.exports = {
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
-      '@modules': getSrcDir('modules'),
-      '@configs': getSrcDir('configs'),
-      '@globals': getSrcDir('globals'),
-      '@vendors': getSrcDir('vendors'),
-      '@assets': getSrcDir('assets')
+      '@modules': resolve('src/modules'),
+      '@configs': resolve('src/configs'),
+      '@globals': resolve('src/globals'),
+      '@vendors': resolve('src/vendors'),
+      '@assets': resolve('src/assets')
     }
   },
   performance: {
@@ -104,6 +72,7 @@ module.exports = {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url-loader',
         options: {
+          esModule: false,
           limit: 10000,
           name: utils.assetsPath('img/[name].[hash:7].[ext]')
         }
